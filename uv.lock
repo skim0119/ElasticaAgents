@@ -1038,6 +1038,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "bsr" },
+    { name = "click" },
     { name = "fastapi" },
     { name = "langchain" },
     { name = "matplotlib" },
@@ -1053,6 +1054,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "bsr", git = "https://github.com/GazzolaLab/Blender-Soft-Rod" },
+    { name = "click", specifier = ">=8.1.8" },
     { name = "fastapi", specifier = ">=0.115.12" },
     { name = "langchain", specifier = ">=0.0.27" },
     { name = "matplotlib", specifier = ">=3.7.5" },
