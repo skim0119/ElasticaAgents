@@ -8,10 +8,10 @@ import threading
 import uvicorn
 
 # FIXME: Temporary solution until we have a proper package
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../src"))
 
-from src.simulation_api.client import Client
-from src.simulation_api.server import app
+from simulation_api.client import Client
+from simulation_api.server import app
 
 
 @pytest.fixture(scope="module")

@@ -1,7 +1,11 @@
 [project]
-name = "softbot-schema-gen"
+name = "ElasticaAgent"
 version = "0.1.0"
-description = "Add your description here"
+description = "LLM Agent-based framework for soft robotics simulation using Elastica"
+authors = [
+    { name = "SproutTurtle", email = "minjaek3@illinois.edu" },
+    { name = "Seung Hyun Kim", email = "skim449@illinois.edu" },
+]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

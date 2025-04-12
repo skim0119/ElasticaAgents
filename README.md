@@ -10,6 +10,14 @@
 
 ## Dev note
 
+### File structure
+
+- `src`: Libraries
+    - `elastica_agents`: Core library for soft robotics LLM agents
+    - `simulation_api`: FastAPI server exposing PyElastica simulator
+- `examples`: Examples, tutorial, scripts for demonstrations
+- `tests`: Unit test for the library and API
+
 ### Testing
 
 Run the tests to verify the client-server functionality:
