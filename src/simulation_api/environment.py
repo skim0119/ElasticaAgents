@@ -7,20 +7,19 @@ from typing import Any, Protocol
 import time
 import numpy as np
 
+
 class SimulationEnvironmentProtocol(Protocol):
-    def build(self, simulation_schema: dict[str, Any]) -> None:
-        ...
+    def build(self, simulation_schema: dict[str, Any]) -> None: ...
 
-    def run(self, simulation_time: float) -> dict[str, Any]:
-        ...
+    def run(self, simulation_time: float) -> dict[str, Any]: ...
 
-    def close(self) -> None:
-        ...
+    def close(self) -> None: ...
+
 
 class MockEnvWrapper(SimulationEnvironmentProtocol):
     """Base class for mock environments."""
 
-    def __init__(self, uid:str, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, uid: str, *args: Any, **kwargs: Any) -> None:
         self.uid = uid
         self.n_elem = 10
 
@@ -33,8 +32,11 @@ class MockEnvWrapper(SimulationEnvironmentProtocol):
         walltime = time.time() - start_time
         return {
             "walltime": walltime,
-            "positions": np.random.uniform(size=(3, self.n_elem + 1)),
-            "directors": np.random.uniform(size=(3, 3, self.n_elem)),
+            "end_status": "success",
+            "simulation_results": {
+                "positions": np.random.uniform(size=(3, self.n_elem + 1)).tolist(),
+                "directors": np.random.uniform(size=(3, 3, self.n_elem)).tolist(),
+            },
         }
 
     def close(self) -> None:

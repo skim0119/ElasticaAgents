@@ -70,10 +70,6 @@ class SimulationEnvs:
 
 
 ########## API models ##########
-class EnvCreateRequest(BaseModel):
-    env_id: str
-
-
 class EnvCreateResponse(BaseModel):
     instance_id: str
 
@@ -87,7 +83,9 @@ class EnvRunRequest(BaseModel):
 
 
 class EnvRunResponse(BaseModel):
-    result: Any
+    walltime: float
+    end_status: str
+    simulation_results: dict[str, Any]
 
 
 class EnvBuildRequest(BaseModel):
@@ -101,7 +99,7 @@ envs = SimulationEnvs()
 
 # API route definitions
 @app.post("/envs/", response_model=EnvCreateResponse)
-async def env_create(request: EnvCreateRequest):
+async def env_create():
     """
     Create an instance of the specified environment
 
@@ -112,7 +110,6 @@ async def env_create(request: EnvCreateRequest):
     """
     instance_id = envs.create()
     return {"instance_id": instance_id}
-
 
 
 @app.post("/envs/{instance_id}/build/")
@@ -129,7 +126,7 @@ async def env_run(instance_id: str, request: EnvRunRequest):
     Run the environment for a given amount of time.
     """
     result = envs.run(instance_id, request.simulation_time)
-    return result
+    return EnvRunResponse(**result)
 
 
 @app.post("/envs/{instance_id}/close/", status_code=204)
