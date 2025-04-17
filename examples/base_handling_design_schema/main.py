@@ -1,18 +1,36 @@
-from fastapi import FastAPI
+import os
 from pydantic import BaseModel
+from mcp.server.fastmcp import FastMCP
 from schema_parser import instruction_to_schema
 
-# for Fast API implementatation
-app = FastAPI()
+mcp = FastMCP("generate_schema_with_validation")
 
-# python class for Input/Output Jason structure for FastAPI 
+# Input schema using Pydantic
 class Instruction(BaseModel):
     instruction: str
 
-class RawText(BaseModel):
+# Output schema using Pydantic
+class RawSchema(BaseModel):
     schema: str
 
-@app.post("/generate-schema", response_model=RawText)
-def generate_schema(instruction: Instruction):
-    schema_text = instruction_to_schema(instruction.instruction)
-    return {"schema": schema_text}
+@mcp.tool()
+def generate_schema(instruction: str) -> RawSchema:
+    """
+    Generate a soft robot schema from a natural language instruction using OpenAI API.
+
+    Args:
+        data (Instruction): An object containing a single field:
+            - instruction (str): A natural language description of the soft robot design,
+              such as "make a robot that slithers like a snake".
+
+    Returns:
+        RawSchema: An object containing a single field:
+            - schema (str): The resulting text-based robot schema representing actuators,
+              connections, and actuation groups.
+    """
+    validated = Instruction(instruction=instruction)
+    schema_text = instruction_to_schema(instruction)
+    return RawSchema(schema=schema_text)
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")
