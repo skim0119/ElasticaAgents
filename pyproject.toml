@@ -14,6 +14,7 @@ dependencies = [
     "fastapi>=0.115.12",
     "langchain>=0.0.27",
     "matplotlib>=3.7.5",
+    "mcp-agent>=0.0.1",
     "numpy>=1.24.4",
     "openai>=1.72.0",
     "pydantic>=2.11.3",
