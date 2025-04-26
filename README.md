@@ -1,36 +1,73 @@
-# Natural Language to Real: Modular design for soft robotics
+# ElasticaAgents: Modular design for soft robotics and simulation
+
+**ElasticaAgents** is an open-source framework for translating high-level design instructions into modular soft-robotic assemblies. It leverages LLM-driven multi-agents, the PyElastica physics engine, and FastAPI to enable end-to-end prototyping and optimization of soft-robotic designs.
 
 > dev note: use uv for package management
 
+---
+
 ## Features
 
-- Use FastAPI and MCP to expose existing python-simulation package and visualization tools for LLM
-- Different LLMAgent system for prototyping and optimization
-- Provide design schema and assembly instruction for soft robotics
+- **LLM-Powered Design Agents**
+  Multiple agent architectures for design prototyping, parameter tuning, and assembly planning.
 
-## Dev note
+- **Simulation API**
+  A FastAPI server wrapping the PyElastica simulator for real-time physics validation and visualization.
 
-### File structure
+- **Schema-Driven Assemblies**
+  JSON/YAML schemas to describe modular soft-robotic components and their interconnections.
 
-- `src`: Libraries
-    - `elastica_agents`: Core library for soft robotics LLM agents
-    - `simulation_api`: FastAPI server exposing PyElastica simulator
-- `examples`: Examples, tutorial, scripts for demonstrations
-- `tests`: Unit test for the library and API
+- **Extensible Toolchain**
+  Plug-in support for new actuation models, material properties, and visualization back-ends.
 
-### Testing
+---
 
-Run the tests to verify the client-server functionality:
+## Installation
 
 ```bash
-uv run pytest
+uv sync
 ```
 
-### API Endpoints
+---
 
-The server provides the following endpoints:
+## Quick Start
 
-- `POST /envs/` - Create a new environment
-- `POST /envs/{instance_id}/build/` - Build the environment with simulation schema
-- `POST /envs/{instance_id}/run/` - Run the simulation for a specified time
-- `POST /envs/{instance_id}/close/` - Close the environment
+1. **Set up your environment**
+   ```bash
+   export OPENAI_API_KEY="your-openai-key"
+   ```
+
+2. **Launch the Simulation Server**
+   ```bash
+   elastica-mcp-server --host 0.0.0.0 --port 8000
+   ```
+
+3. **Control from Python**
+   ```python
+   from elastica_agents import ElasticaAgents
+
+   agents = ElasticaAgents(workdir=".", verbose=True).config(
+       model="gpt-4o-mini", temp=0.1,
+   )
+   agents.run(prompt)
+   ```
+
+---
+
+## Testing
+
+Automated tests cover both library modules and API endpoints:
+
+```bash
+uv run pytest --cov=nl2real
+```
+
+---
+
+## Self-hosting Tools
+
+### Elastica Simulation Server
+
+```bash
+elastica-mcp-server --host 0.0.0.0 --port 8000
+```
