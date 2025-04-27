@@ -1,0 +1,67 @@
+{
+  "actuators": [
+    {
+      "id": "actuator_1",
+      "mode": ["bending", "twisting_clockwise"],
+      "actuation_parameter": [
+        {
+          "bending_direction": [0.0, 1.0, 0.0],
+          "max_bending_magnitude": 0.5
+        },
+        {
+          "twisting_direction": "CW",
+          "max_twisting_magnitude": 0.3
+        }
+      ],
+      "start_point": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "end_point": {"x": 0.0, "y": 0.0, "z": 1.0},
+      "radius": 0.03,
+      "orientation": {
+        "d1": [1.0, 0.0, 0.0],
+        "d2": [0.0, 1.0, 0.0],
+        "d3": [0.0, 0.0, 1.0]
+      }
+    },
+    {
+      "id": "actuator_2",
+      "mode": ["bending"],
+      "actuation_parameter": [
+        {
+          "bending_direction": [1.0, 0.0, 0.0],
+          "max_bending_magnitude": 0.3
+        }
+      ],
+      "start_point": {"x": 0.0, "y": 0.0, "z": 1.0},
+      "end_point": {"x": 0.0, "y": 0.0, "z": 2.0},
+      "radius": 0.03,
+      "orientation": {
+        "d1": [1.0, 0.0, 0.0],
+        "d2": [0.0, 1.0, 0.0],
+        "d3": [0.0, 0.0, 1.0]
+      }
+    }
+  ],
+  "connections": [
+    {
+      "actuators": ["actuator_1", "actuator_2"],
+      "rigid_link_locations": [
+        {"x": 0.0, "y": 0.0, "z": 1.0}
+      ],
+      "orientation": {
+        "d1": [1.0, 0.0, 0.0],
+        "d2": [0.0, 1.0, 0.0],
+        "d3": [0.0, 0.0, 1.0]
+      }
+    }
+  ],
+  "actuation_groups": [
+    {
+      "name": "bend_group",
+      "actuators_actuation": [["actuator_1", 0], ["actuator_2", 0]]
+    },
+    {
+      "name": "twist_group",
+      "actuators_actuation": [["actuator_1", 1]]
+    }
+  ]
+}
