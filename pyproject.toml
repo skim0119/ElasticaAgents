@@ -1,18 +1,34 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "ElasticaAgent"
 version = "0.1.0"
 description = "LLM Agent-based framework for soft robotics simulation using Elastica"
+keywords = ["soft robotics", "simulation", "LLM", "agents"]
 authors = [
     { name = "SproutTurtle", email = "minjaek3@illinois.edu" },
     { name = "Seung Hyun Kim", email = "skim449@illinois.edu" },
 ]
+maintainers = [
+    { name = "Seung Hyun Kim", email = "skim449@illinois.edu" },
+]
 readme = "README.md"
 requires-python = ">=3.12"
+license = "MIT"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "bsr",
     "click>=8.1.8",
     "fastapi>=0.115.12",
-    "langchain>=0.0.27",
     "matplotlib>=3.7.5",
     "mcp-agent>=0.0.1",
     "numpy>=1.24.4",
@@ -22,13 +38,28 @@ dependencies = [
     "python-dotenv>=1.1.0",
     "scipy>=1.10.1",
     "uvicorn>=0.33.0",
+    "vapory>=0.1.2",
 ]
+
+[project.scripts]
+elastica-agents = "elastica_agents.cli.app:main"
 
 [tool.uv.sources]
 pyelastica = { git = "https://github.com/GazzolaLab/PyElastica", branch = "update-0.3.3" }
 bsr = { git = "https://github.com/GazzolaLab/Blender-Soft-Rod" }
 
-[dependency-groups]
+[tool.hatch.build.targets.wheel]
+packages = ["elastica_agents"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "elastica_agents",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
+
+[tool.dependency-groups]
 dev = [
     "pytest>=8.3.5",
 ]

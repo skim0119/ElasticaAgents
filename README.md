@@ -52,6 +52,11 @@ uv sync
    agents.run(prompt)
    ```
 
+4. **CLI**
+   ```bash
+   elastica-agents -m "design a snake-robot with 3 actuators."
+   ```
+
 ---
 
 ## Testing
@@ -59,7 +64,7 @@ uv sync
 Automated tests cover both library modules and API endpoints:
 
 ```bash
-uv run pytest --cov=nl2real
+pytest
 ```
 
 ---
