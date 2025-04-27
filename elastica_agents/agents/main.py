@@ -11,6 +11,7 @@ from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
 app = MCPApp(name="rock_paper_scissors")
 
+
 def my_rps_choice() -> str:
     """
     Returns a random choice from rock, paper, or scissors.
@@ -63,6 +64,66 @@ async def example_usage():
         )
 
         logger.info(f"Expert math result: {response}")
+
+
+class ElasticaAgents:
+    """ElasticaAgents class to handle interaction with LLM and simulation"""
+
+    def __init__(self, workdir: str = ".", verbose: bool = False):
+        """Initialize ElasticaAgents
+
+        Args:
+            workdir: Working directory for outputs
+            verbose: Enable verbose output
+        """
+        self.workdir = Path(workdir)
+        self.verbose = verbose
+        self.model = "gpt-4o-mini"
+        self.temp = 0.1
+
+        if verbose:
+            logger.setLevel(logging.DEBUG)
+
+        logger.debug(f"Initialized ElasticaAgents with workdir: {self.workdir}")
+
+    def config(self, model: Optional[str] = None, temp: Optional[float] = None):
+        """Configure the agents
+
+        Args:
+            model: LLM model to use
+            temp: Temperature for LLM generation
+
+        Returns:
+            self: For method chaining
+        """
+        if model:
+            self.model = model
+        if temp is not None:
+            self.temp = temp
+
+        logger.debug(f"Configured with model={self.model}, temp={self.temp}")
+        return self
+
+    def run(self, prompt: str):
+        """Run the ElasticaAgents with the given prompt
+
+        Args:
+            prompt: Design prompt for the agents
+        """
+        logger.info(f"Running with prompt: {prompt}")
+
+        # Check if required packages are installed
+        try:
+            # This would be the actual implementation
+            logger.info("Agent processing the design request...")
+            # TODO: Implement the actual agent logic using mcp-agent
+
+        except Exception as e:
+            logger.error(f"Error running agents: {e}")
+            logger.error("Make sure all dependencies are installed with 'uv sync'")
+            sys.exit(1)
+
+        logger.info("Design processing complete")
 
 
 if __name__ == "__main__":

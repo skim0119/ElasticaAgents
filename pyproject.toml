@@ -59,7 +59,8 @@ include = [
     "pyproject.toml",
 ]
 
-[tool.dependency-groups]
+[dependency-groups]
 dev = [
     "pytest>=8.3.5",
+    "ruff>=0.11.7",
 ]
