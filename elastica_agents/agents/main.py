@@ -1,3 +1,4 @@
+import sys
 import asyncio
 import random
 import time
@@ -9,57 +10,31 @@ from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 from mcp_agent.workflows.orchestrator.orchestrator import Orchestrator
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
-app = MCPApp(name="rock_paper_scissors")
+
+def assert_api_key_exist(logger: logging.Logger):
+    if not os.environ.get("OPENAI_API_KEY"):
+        logger.warning("OPENAI_API_KEY environment variable is not set.")
+        logger.info("Please set it with: export OPENAI_API_KEY='your-openai-key'")
+        sys.exit()
 
 
-def my_rps_choice() -> str:
-    """
-    Returns a random choice from rock, paper, or scissors.
-    """
-    choice = random.choice(["rock", "paper", "scissors"])
-    # logger.info(f"Agent picked: {choice}")
-    return choice
 
-
-async def example_usage():
+async def example_usage(app: MCPApp, agents: list[Agent], prompt: str):
     async with app.run() as agent_app:
         logger = agent_app.logger
         context = agent_app.context
 
-        player_prompt = """
-            You are a rock-paper-scissors player.
-            When referee asks, use 'my_rps_choice' tool to pick a move. (Don't ask human!)
-        """
-
-        agent_1 = Agent(
-            name="agent_1",
-            instruction=player_prompt,
-            functions=[my_rps_choice],
-        )
-
-        agent_2 = Agent(
-            name="agent_2",
-            instruction=player_prompt,
-            functions=[my_rps_choice],
-        )
-
         orchestrator = Orchestrator(
             llm_factory=OpenAIAugmentedLLM,
-            available_agents=[
-                agent_1,
-                agent_2,
-            ],
+            context=context,
+            available_agents=agents
             # We will let the orchestrator iteratively plan the task at every step
             plan_type="full",
         )
 
         # Let the judge LLM coordinate the game
         response = await orchestrator.generate_str(
-            message="""
-                You are the referee of a rock-paper-scissors match.
-                Ask `agent_1` and `agent_2` to make their moves by sending them messages.
-                Once you have both moves, determine who wins based on the standard rock-paper-scissors rules.
-            """,
+            message=prompt,
             request_params=RequestParams(model="gpt-4o"),
         )
 
@@ -76,6 +51,11 @@ class ElasticaAgents:
             workdir: Working directory for outputs
             verbose: Enable verbose output
         """
+        self.app = MCPApp(name="ElasticaAgent")
+
+        self.logger = logging.getLogger("ElasticaAgents")
+        assert_api_key_exist(self.logger)
+
         self.workdir = Path(workdir)
         self.verbose = verbose
         self.model = "gpt-4o-mini"
@@ -110,24 +90,41 @@ class ElasticaAgents:
         Args:
             prompt: Design prompt for the agents
         """
-        logger.info(f"Running with prompt: {prompt}")
+        self.logger.info(f"Running with prompt: {prompt}")
 
         # Check if required packages are installed
         try:
             # This would be the actual implementation
-            logger.info("Agent processing the design request...")
-            # TODO: Implement the actual agent logic using mcp-agent
+            self.logger.info("Agent processing the design request...")
+            team = self.create_team()
+            start_time = time.time()
+            asyncio.run(example_usage(self.app, team, prompt))
+            end_time = time.time()
+            self.logger.info(f"Agent processing time: {end_time - start_time:.2f}s")
 
         except Exception as e:
-            logger.error(f"Error running agents: {e}")
-            logger.error("Make sure all dependencies are installed with 'uv sync'")
+            self.logger.error(f"Error running agents: {e}")
+            self.logger.error("Make sure all dependencies are installed with 'uv sync'")
             sys.exit(1)
 
-        logger.info("Design processing complete")
+        self.logger.info("Design processing complete")
 
+    def create_team(self) -> list[Agent]:
+        # TODO
+        player_prompt = """
+            You are a rock-paper-scissors player.
+            When referee asks, use 'my_rps_choice' tool to pick a move. (Don't ask human!)
+        """
+        agent_1 = Agent(
+            name="agent_1",
+            instruction=player_prompt,
+            functions=[my_rps_choice],
+        )
 
-if __name__ == "__main__":
-    start = time.time()
-    asyncio.run(example_usage())
-    end = time.time()
-    print(f"\nTotal run time: {end - start:.2f}s")
+        agent_2 = Agent(
+            name="agent_2",
+            instruction=player_prompt,
+            functions=[my_rps_choice],
+        )
+
+        return [agent_1, agent_2]
