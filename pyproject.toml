@@ -30,7 +30,7 @@ dependencies = [
     "click>=8.1.8",
     "fastapi>=0.115.12",
     "matplotlib>=3.7.5",
-    "mcp-agent>=0.0.1",
+    "mcp-agent>=0.0.18",
     "numpy>=1.24.4",
     "openai>=1.72.0",
     "pydantic>=2.11.3",
@@ -45,8 +45,8 @@ dependencies = [
 elastica-agents = "elastica_agents.cli.app:main"
 
 [tool.uv.sources]
-pyelastica = { git = "https://github.com/GazzolaLab/PyElastica", branch = "update-0.3.3" }
 bsr = { git = "https://github.com/GazzolaLab/Blender-Soft-Rod" }
+pyelastica = { git = "https://github.com/GazzolaLab/PyElastica", branch = "update/numpy2.0" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["elastica_agents"]

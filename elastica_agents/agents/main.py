@@ -1,14 +1,21 @@
+import os
 import sys
 import asyncio
 import random
 import time
 import logging
+from pathlib import Path
 
 from mcp_agent.app import MCPApp
 from mcp_agent.agents.agent import Agent
 from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 from mcp_agent.workflows.orchestrator.orchestrator import Orchestrator
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
+
+from .settings import get_settings
+from ..tool.rendering import render_design
+from ..prompts.designer import design_instructions
+from ..prompts.rendering import rendering_instructions
 
 
 def assert_api_key_exist(logger: logging.Logger):
@@ -18,8 +25,7 @@ def assert_api_key_exist(logger: logging.Logger):
         sys.exit()
 
 
-
-async def example_usage(app: MCPApp, agents: list[Agent], prompt: str):
+async def run_agents(app: MCPApp, agents: list[Agent], prompt: str):
     async with app.run() as agent_app:
         logger = agent_app.logger
         context = agent_app.context
@@ -27,7 +33,7 @@ async def example_usage(app: MCPApp, agents: list[Agent], prompt: str):
         orchestrator = Orchestrator(
             llm_factory=OpenAIAugmentedLLM,
             context=context,
-            available_agents=agents
+            available_agents=agents,
             # We will let the orchestrator iteratively plan the task at every step
             plan_type="full",
         )
@@ -35,7 +41,7 @@ async def example_usage(app: MCPApp, agents: list[Agent], prompt: str):
         # Let the judge LLM coordinate the game
         response = await orchestrator.generate_str(
             message=prompt,
-            request_params=RequestParams(model="gpt-4o"),
+            request_params=RequestParams(model="gpt-4o-mini"),
         )
 
         logger.info(f"Expert math result: {response}")
@@ -51,22 +57,22 @@ class ElasticaAgents:
             workdir: Working directory for outputs
             verbose: Enable verbose output
         """
-        self.app = MCPApp(name="ElasticaAgent")
 
         self.logger = logging.getLogger("ElasticaAgents")
         assert_api_key_exist(self.logger)
+        if verbose:
+            self.logger.setLevel(logging.DEBUG)
 
-        self.workdir = Path(workdir)
+        self.workdir = Path(workdir).resolve()
         self.verbose = verbose
         self.model = "gpt-4o-mini"
-        self.temp = 0.1
 
-        if verbose:
-            logger.setLevel(logging.DEBUG)
+        self.logger.debug(f"Initialized ElasticaAgents with workdir: {self.workdir}")
 
-        logger.debug(f"Initialized ElasticaAgents with workdir: {self.workdir}")
+        # Create working directory
+        self.workdir.mkdir(parents=True, exist_ok=True)
 
-    def config(self, model: Optional[str] = None, temp: Optional[float] = None):
+    def config(self, model: str | None = None):
         """Configure the agents
 
         Args:
@@ -78,10 +84,8 @@ class ElasticaAgents:
         """
         if model:
             self.model = model
-        if temp is not None:
-            self.temp = temp
 
-        logger.debug(f"Configured with model={self.model}, temp={self.temp}")
+        self.logger.debug(f"Configured with model={self.model}")
         return self
 
     def run(self, prompt: str):
@@ -94,11 +98,13 @@ class ElasticaAgents:
 
         # Check if required packages are installed
         try:
+            settings = get_settings(self.model, self.workdir.as_posix())
+            app = MCPApp(name="ElasticaAgent", settings=settings)
             # This would be the actual implementation
             self.logger.info("Agent processing the design request...")
             team = self.create_team()
             start_time = time.time()
-            asyncio.run(example_usage(self.app, team, prompt))
+            asyncio.run(run_agents(app, team, prompt))
             end_time = time.time()
             self.logger.info(f"Agent processing time: {end_time - start_time:.2f}s")
 
@@ -110,21 +116,18 @@ class ElasticaAgents:
         self.logger.info("Design processing complete")
 
     def create_team(self) -> list[Agent]:
-        # TODO
-        player_prompt = """
-            You are a rock-paper-scissors player.
-            When referee asks, use 'my_rps_choice' tool to pick a move. (Don't ask human!)
-        """
-        agent_1 = Agent(
-            name="agent_1",
-            instruction=player_prompt,
-            functions=[my_rps_choice],
+        design_agent = Agent(
+            name="design_agent",
+            instruction=design_instructions,
+            server_names=["filesystem"],
+        )
+        return [design_agent]
+
+        rendering_agent = Agent(
+            name="rendering_agent",
+            instruction=rendering_instructions,
+            server_names=["filesystem"],
+            functions=[render_design],
         )
 
-        agent_2 = Agent(
-            name="agent_2",
-            instruction=player_prompt,
-            functions=[my_rps_choice],
-        )
-
-        return [agent_1, agent_2]
+        return [design_agent, rendering_agent]

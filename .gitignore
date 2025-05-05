@@ -8,7 +8,9 @@ __pycache__/
 
 *.png
 *.mp4
-
+*.json
+*.jsonl
+*.yaml
 # Distribution / packaging
 .Python
 build/
