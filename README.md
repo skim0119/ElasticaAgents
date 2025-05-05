@@ -3,6 +3,7 @@
 **ElasticaAgents** is an open-source framework for translating high-level design instructions into modular soft-robotic assemblies. It leverages LLM-driven multi-agents, the PyElastica physics engine, and FastAPI to enable end-to-end prototyping and optimization of soft-robotic designs.
 
 > dev note: use uv for package management
+> The repository is still under development.
 
 ---
 
