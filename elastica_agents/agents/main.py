@@ -96,6 +96,8 @@ class ElasticaAgents:
         """
         self.logger.info(f"Running with prompt: {prompt}")
 
+        self.augment_prompt(prompt)
+
         # Check if required packages are installed
         try:
             settings = get_settings(self.model, self.workdir.as_posix())
@@ -110,8 +112,9 @@ class ElasticaAgents:
 
         except Exception as e:
             self.logger.error(f"Error running agents: {e}")
-            self.logger.error("Make sure all dependencies are installed with 'uv sync'")
             sys.exit(1)
+        finally:
+            app.close()
 
         self.logger.info("Design processing complete")
 
@@ -121,7 +124,6 @@ class ElasticaAgents:
             instruction=design_instructions,
             server_names=["filesystem"],
         )
-        return [design_agent]
 
         rendering_agent = Agent(
             name="rendering_agent",
@@ -131,3 +133,12 @@ class ElasticaAgents:
         )
 
         return [design_agent, rendering_agent]
+
+    def augment_prompt(self, prompt: str):
+        """Augment the prompt with the design instructions and rendering instructions"""
+        return f"""
+        You are managing a team of agents to design a soft robot, composed of straight rods.
+        The goal is to create a design in json format, and render it for visualization.
+
+        {prompt}
+        """
