@@ -18,4 +18,4 @@ def main(message: str, workdir: str, verbose: bool, model: str):
 
     # Run simple mcp-agent
     agents = ElasticaAgents(workdir=workdir, verbose=verbose).config(model=model)
-    agents.run(message)
+    asyncio.run(agents.run(message))

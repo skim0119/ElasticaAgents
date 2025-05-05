@@ -1,6 +1,3 @@
-from typing import Any
-import os
-from pathlib import Path
 import importlib.resources
 from abc import ABC, abstractmethod
 
@@ -8,7 +5,6 @@ import numpy as np
 import vapory
 
 from elastica_agents.design_schema import (
-    RobotDesignSchema,
     Point3D,
 )
 
@@ -48,20 +44,10 @@ class PVRod(PVGeometry):
         # )
 
 
-def extract_rods(design_schema: RobotDesignSchema) -> list[PVRod]:
-    rods = []
-    for actuator in design_schema.actuators:
-        rod = PVRod(
-            start_point=actuator.start_point,
-            end_point=actuator.end_point,
-            radius=actuator.radius,
-        )
-        rods.append(rod)
-    return rods
-
-
 def render_design(
-    design_schema: RobotDesignSchema,
+    start_points: list[Point3D],
+    end_points: list[Point3D],
+    radii: list[float],
     output_path: str | None = None,
     width: int = 800,
     height: int = 600,
@@ -70,7 +56,9 @@ def render_design(
     Render the robot design using Vapory.
 
     Args:
-        design_schema: Robot design specification
+        start_points: List of start points for each rod
+        end_points: List of end points for each rod
+        radii: List of radii for each rod
         output_path: Path to save the rendered image
         (if None, image is saved in the current working directory)
         width: Image width in pixels
@@ -79,7 +67,14 @@ def render_design(
     Returns:
         np.ndarray: Rendered image as a numpy array
     """
-    rods = extract_rods(design_schema)
+    rods = []
+    for start_point, end_point, radius in zip(start_points, end_points, radii):
+        rod = PVRod(
+            start_point=start_point,
+            end_point=end_point,
+            radius=radius,
+        )
+        rods.append(rod)
 
     background_path = str(
         importlib.resources.files("elastica_agents") / "tool" / "povray_background.inc"

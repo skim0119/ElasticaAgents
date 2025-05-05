@@ -25,28 +25,6 @@ def assert_api_key_exist(logger: logging.Logger):
         sys.exit()
 
 
-async def run_agents(app: MCPApp, agents: list[Agent], prompt: str):
-    async with app.run() as agent_app:
-        logger = agent_app.logger
-        context = agent_app.context
-
-        orchestrator = Orchestrator(
-            llm_factory=OpenAIAugmentedLLM,
-            context=context,
-            available_agents=agents,
-            # We will let the orchestrator iteratively plan the task at every step
-            plan_type="full",
-        )
-
-        # Let the judge LLM coordinate the game
-        response = await orchestrator.generate_str(
-            message=prompt,
-            request_params=RequestParams(model="gpt-4o-mini"),
-        )
-
-        logger.info(f"Expert math result: {response}")
-
-
 class ElasticaAgents:
     """ElasticaAgents class to handle interaction with LLM and simulation"""
 
@@ -88,7 +66,35 @@ class ElasticaAgents:
         self.logger.debug(f"Configured with model={self.model}")
         return self
 
-    def run(self, prompt: str):
+    async def _run_agents(self, app: MCPApp, agents: list[Agent], prompt: str):
+        """Run the agents with the given prompt
+
+        Args:
+            app: MCPApp instance
+            agents: List of agents to run
+            prompt: Design prompt for the agents
+        """
+        async with app.run() as agent_app:
+            logger = agent_app.logger
+            context = agent_app.context
+
+            orchestrator = Orchestrator(
+                llm_factory=OpenAIAugmentedLLM,
+                context=context,
+                available_agents=agents,
+                # We will let the orchestrator iteratively plan the task at every step
+                plan_type="full",
+            )
+
+            # Let the judge LLM coordinate the game
+            response = await orchestrator.generate_str(
+                message=prompt,
+                request_params=RequestParams(model="gpt-4o-mini"),
+            )
+
+            logger.info(f"Expert math result: {response}")
+
+    async def run(self, prompt: str):
         """Run the ElasticaAgents with the given prompt
 
         Args:
@@ -106,15 +112,13 @@ class ElasticaAgents:
             self.logger.info("Agent processing the design request...")
             team = self.create_team()
             start_time = time.time()
-            asyncio.run(run_agents(app, team, prompt))
+            await self._run_agents(app, team, prompt)
             end_time = time.time()
             self.logger.info(f"Agent processing time: {end_time - start_time:.2f}s")
 
         except Exception as e:
             self.logger.error(f"Error running agents: {e}")
             sys.exit(1)
-        finally:
-            app.close()
 
         self.logger.info("Design processing complete")
 
