@@ -2,7 +2,7 @@ import os
 from mcp_agent.config import Settings
 
 
-def get_settings(model: str | None = None, workdir: str | None = None) -> Settings:
+def get_settings(model: str, workdir: str) -> Settings:
     """
     Factory function to create settings for the ElasticaAgents
     """
@@ -13,13 +13,17 @@ def get_settings(model: str | None = None, workdir: str | None = None) -> Settin
             "level": "debug",
             "progress_display": True,
             "path_settings": {
-                "path_pattern": "logs/mcp-agent-{unique_id}.jsonl",
+                "path_pattern": workdir + "/logs/mcp-agent-{unique_id}.jsonl",
                 "unique_id": "timestamp",  # Options: "timestamp" or "session_id"
-                "timestamp_format": "%Y%m%d_%H%M%S",
+                # "timestamp_format": "%Y%m%d_%H%M%S",
             },
         },
         "mcp": {
             "servers": {
+                "fetch": {
+                    "command": "uvx",
+                    "args": ["mcp-server-fetch"],
+                },
                 "filesystem": {
                     "command": "npx",
                     "args": [
@@ -27,11 +31,11 @@ def get_settings(model: str | None = None, workdir: str | None = None) -> Settin
                         "@modelcontextprotocol/server-filesystem",
                         workdir,
                     ],
-                }
+                },
             }
         },
         "openai": {
-            "default_model": model or "gpt-4o-mini",
+            "default_model": model,
             "api_key": os.environ.get("OPENAI_API_KEY"),
         },
     }
@@ -39,4 +43,7 @@ def get_settings(model: str | None = None, workdir: str | None = None) -> Settin
     default_setting = Settings(
         **default_setting_dict,
     )
+    default_setting.otel.console_debug = True
+    default_setting.usage_telemetry.enable_detailed_telemetry = True
+
     return default_setting

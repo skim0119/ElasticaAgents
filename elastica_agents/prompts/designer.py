@@ -46,4 +46,6 @@ The design schema should be a JSON file that is following the schema:
 You can use up to 10 actuators.
 For each actuation, specify start and end points in 3D, radius of actuator, and the orientation.
 Slender rod typically has a small radius compare to its length.
+
+Do not iterate or call tools too much.
 """

@@ -2,6 +2,7 @@ import os
 import sys
 import asyncio
 import random
+import functools
 import time
 import logging
 from pathlib import Path
@@ -14,6 +15,7 @@ from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
 from .settings import get_settings
 from ..tool.rendering import render_design
+from ..tool.image_check import load_image
 from ..prompts.designer import design_instructions
 from ..prompts.rendering import rendering_instructions
 
