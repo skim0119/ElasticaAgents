@@ -66,7 +66,9 @@ class ElasticaAgents:
         self.logger.debug(f"Configured with model={self.model}")
         return self
 
-    async def _run_agents(self, app: MCPApp, agents: list[Agent], prompt: str):
+    async def _run_agents(
+        self, app: MCPApp, planner: Agent, agents: list[Agent], prompt: str
+    ):
         """Run the agents with the given prompt
 
         Args:
@@ -77,9 +79,13 @@ class ElasticaAgents:
         async with app.run() as agent_app:
             logger = agent_app.logger
             context = agent_app.context
+            logger.info("Current config: ", data=context.config.model_dump())
+
+            # context.config.mcp.servers["filesystem"].args.extend([self.workdir.as_posix()])
 
             orchestrator = Orchestrator(
                 llm_factory=OpenAIAugmentedLLM,
+                planner=OpenAIAugmentedLLM(planner),
                 context=context,
                 available_agents=agents,
                 # We will let the orchestrator iteratively plan the task at every step
@@ -89,10 +95,10 @@ class ElasticaAgents:
             # Let the judge LLM coordinate the game
             response = await orchestrator.generate_str(
                 message=prompt,
-                request_params=RequestParams(model="gpt-4o-mini"),
+                request_params=RequestParams(model=self.model),
             )
 
-            logger.info(f"Expert math result: {response}")
+            logger.info(f"Orchestrator result: {response}")
 
     async def run(self, prompt: str):
         """Run the ElasticaAgents with the given prompt
@@ -111,8 +117,9 @@ class ElasticaAgents:
             # This would be the actual implementation
             self.logger.info("Agent processing the design request...")
             team = self.create_team()
+            planner = self.create_planner()
             start_time = time.time()
-            await self._run_agents(app, team, prompt)
+            await self._run_agents(app, planner, team, prompt)
             end_time = time.time()
             self.logger.info(f"Agent processing time: {end_time - start_time:.2f}s")
 
@@ -122,7 +129,30 @@ class ElasticaAgents:
 
         self.logger.info("Design processing complete")
 
+    def create_planner(self) -> Agent:
+        planner = Agent(
+            name="LLM Orchestration Planner",
+            instruction="""
+                You are an expert planner. Given an objective task and a list of MCP servers (which are collections of tools)
+                or Agents (which are collections of servers), your job is to break down the objective into a series of steps,
+                which can be performed by LLMs with access to the servers or agents.
+
+                Typical workflow:
+                - Design the robot by design_agent
+                - Render the design by rendering_agent
+                - Check the design by evaluator_agent
+
+                If the evaluator agent confirms the design, terminate the process.
+                Otherwise, try to re-design the robot.
+                """,
+        )
+        return planner
+
     def create_team(self) -> list[Agent]:
+        """
+        Create the team of agents
+        """
+
         design_agent = Agent(
             name="design_agent",
             instruction=design_instructions,
@@ -131,12 +161,22 @@ class ElasticaAgents:
 
         rendering_agent = Agent(
             name="rendering_agent",
-            instruction=rendering_instructions,
+            instruction=rendering_instructions.format(workdir=self.workdir.as_posix()),
             server_names=["filesystem"],
             functions=[render_design],
         )
 
-        return [design_agent, rendering_agent]
+        evaluator_agent = Agent(
+            name="evaluator_agent",
+            instruction="""
+                Load the latest design rendered image and report what does it look like, and if it convey the design intent.
+                If it is reasonably good, confirm the design. Don't be too strict.
+            """,
+            functions=[load_image],
+            # server_names=["fetch"],
+        )
+
+        return [design_agent, rendering_agent, evaluator_agent]
 
     def augment_prompt(self, prompt: str):
         """Augment the prompt with the design instructions and rendering instructions"""

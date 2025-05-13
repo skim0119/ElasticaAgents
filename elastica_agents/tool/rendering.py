@@ -1,4 +1,5 @@
 import importlib.resources
+import os
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -48,10 +49,10 @@ def render_design(
     start_points: list[Point3D],
     end_points: list[Point3D],
     radii: list[float],
-    output_path: str | None = None,
+    output_file_name: str,
     width: int = 800,
     height: int = 600,
-) -> np.ndarray:
+) -> None:
     """
     Render the robot design using Vapory.
 
@@ -59,13 +60,12 @@ def render_design(
         start_points: List of start points for each rod
         end_points: List of end points for each rod
         radii: List of radii for each rod
-        output_path: Path to save the rendered image
-        (if None, image is saved in the current working directory)
+        output_file_name: Name of the file to save the rendered image
         width: Image width in pixels
         height: Image height in pixels
 
     Returns:
-        np.ndarray: Rendered image as a numpy array
+        None
     """
     rods = []
     for start_point, end_point, radius in zip(start_points, end_points, radii):
@@ -125,13 +125,9 @@ def render_design(
     # Render
     image = scene.render(width=width, height=height, antialiasing=0.01)
 
-    # Save if path is provided
-    if not output_path:
-        output_path = "./robot_view.png"
-
     from PIL import Image as PILImage
 
     img = PILImage.fromarray(image)
-    img.save(output_path)
+    img.save(output_file_name)
 
-    return image
+    # return image
