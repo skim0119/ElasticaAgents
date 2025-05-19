@@ -10,12 +10,15 @@ from pathlib import Path
 from mcp_agent.app import MCPApp
 from mcp_agent.agents.agent import Agent
 from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
-from mcp_agent.workflows.orchestrator.orchestrator import Orchestrator
+
+# from mcp_agent.workflows.orchestrator.orchestrator import Orchestrator
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
 from .settings import get_settings
 from ..tool.rendering import render_design
 from ..tool.image_check import load_image
+from ..llm.openai import OpenAIAugmentedLLMWithImage
+from ..llm.workflow import ElasticaSynthesizeTeam
 from ..prompts.designer import design_instructions
 from ..prompts.rendering import rendering_instructions
 
@@ -85,17 +88,17 @@ class ElasticaAgents:
 
             # context.config.mcp.servers["filesystem"].args.extend([self.workdir.as_posix()])
 
-            orchestrator = Orchestrator(
+            team = ElasticaSynthesizeTeam(
                 llm_factory=OpenAIAugmentedLLM,
                 planner=OpenAIAugmentedLLM(planner),
                 context=context,
-                available_agents=agents,
+                available_llms=agents,
                 # We will let the orchestrator iteratively plan the task at every step
-                plan_type="full",
+                plan_type="iterative",
             )
 
             # Let the judge LLM coordinate the game
-            response = await orchestrator.generate_str(
+            response = await team.generate_str(
                 message=prompt,
                 request_params=RequestParams(model=self.model),
             )
@@ -155,27 +158,35 @@ class ElasticaAgents:
         Create the team of agents
         """
 
-        design_agent = Agent(
-            name="design_agent",
-            instruction=design_instructions,
-            server_names=["filesystem"],
+        design_agent = OpenAIAugmentedLLM(
+            Agent(
+                name="design_agent",
+                instruction=design_instructions,
+                server_names=["filesystem"],
+            )
         )
 
-        rendering_agent = Agent(
-            name="rendering_agent",
-            instruction=rendering_instructions.format(workdir=self.workdir.as_posix()),
-            server_names=["filesystem"],
-            functions=[render_design],
+        rendering_agent = OpenAIAugmentedLLM(
+            Agent(
+                name="rendering_agent",
+                instruction=rendering_instructions.format(
+                    workdir=self.workdir.as_posix()
+                ),
+                server_names=["filesystem"],
+                functions=[render_design],
+            )
         )
 
-        evaluator_agent = Agent(
-            name="evaluator_agent",
-            instruction="""
+        evaluator_agent = OpenAIAugmentedLLM(
+            Agent(
+                name="evaluator_agent",
+                instruction="""
                 Load the latest design rendered image and report what does it look like, and if it convey the design intent.
                 If it is reasonably good, confirm the design. Don't be too strict.
             """,
-            functions=[load_image],
-            # server_names=["fetch"],
+                functions=[load_image],
+                # server_names=["fetch"],
+            )
         )
 
         return [design_agent, rendering_agent, evaluator_agent]
